@@ -22,6 +22,7 @@ if (!process.env.GROQ_API_KEY) {
     throw new Error('GROQ_API_KEY (Groq API key) is required');
 }
 
+const PORT = process.env.PORT || 3000;
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 

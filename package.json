@@ -1,0 +1,41 @@
+{
+  "type": "module",
+  "dependencies": {
+    "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow/tfjs-node": "^4.22.0",
+    "axios": "^1.7.8",
+    "base-64": "^1.0.0",
+    "body-parser": "^1.20.3",
+    "bun": "^1.1.37",
+    "cheerio": "^1.0.0",
+    "discord.js": "^14.16.3",
+    "express": "^4.21.1",
+    "fs": "0.0.1-security",
+    "groq-sdk": "^0.7.0",
+    "natural": "^8.0.1",
+    "node-waf": "^10.1.1",
+    "readline-sync": "^1.4.10",
+    "synaptic": "^1.1.4",
+    "utf8": "^3.0.0"
+  },
+  "name": "trungai",
+  "version": "1.0.0",
+  "description": "Trung's AI",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Trung-Development/self-trained-AI.git"
+  },
+  "keywords": [
+    "AI"
+  ],
+  "author": "vuthanhtrung2010",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Trung-Development/self-trained-AI/OVMAI/issues"
+  },
+  "homepage": "https://github.com/Trung-Development/self-trained-AI#readme"
+}

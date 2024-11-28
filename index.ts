@@ -41,6 +41,8 @@ client.once('ready', () => {
 // Expanded training data
 const trainingData = [
     { input: "hello", output: "Hi there!" },
+    { input: "Who made you?", output: "I was made by Trung!" },
+    { input: "Who created you?", output: "I was created by Trung!" },
     { input: "how are you", output: "I'm doing great, thanks for asking!" },
     { input: "bye", output: "Goodbye! Have a nice day!" },
     { input: "hey", output: "Hello!" },

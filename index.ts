@@ -128,7 +128,7 @@ const inputSequences = inputs.map(input => tokenizer.tokenize(input));
 const outputSequences = outputs.map(output => tokenizer.tokenize(output));
 
 // Create a word index
-const wordIndex = {};
+const wordIndex: { [key: string]: number } = {};
 let index = 1;
 inputSequences.concat(outputSequences).flat().forEach(word => {
     if (!wordIndex[word]) {
@@ -137,11 +137,11 @@ inputSequences.concat(outputSequences).flat().forEach(word => {
 });
 
 // Convert words to indices
-const sequencesToIndices = sequences => sequences.map(seq => seq.map(word => wordIndex[word] || 0));
+const sequencesToIndices = (sequences: string[][]): number[][] => sequences.map(seq => seq.map(word => wordIndex[word] || 0));
 
 // Normalize data
-const normalize = (sequence, maxLength) => {
-    const normalized = new Array(maxLength).fill(0);
+const normalize = (sequence: number[], maxLength: number): number[] => {
+    const normalized: number[] = new Array(maxLength).fill(0);
     sequence.forEach((value, index) => {
         normalized[index] = value / Object.keys(wordIndex).length;
     });
@@ -179,19 +179,24 @@ net = Network.fromJSON(JSON.parse(jsonString));
 const trainer = new synaptic.Trainer(net);
 trainer.train(trainingSet, {
     iterations: 10000,
-    log: true,
-    logPeriod: 100
+    log: 1,
 });
 
 // Memory object to store previous interactions
-const memory = {};
+const memory: { [key: string]: string } = {};
 
-async function scrapeGoogle(query) {
+interface GoogleSearchResult {
+    results: string[];
+}
+
+async function scrapeGoogle(query: string): Promise<string> {
     try {
-        const response = await axios.get(`https://www.google.com/search?q=${encodeURIComponent(query)}&gl=us&hl=en`);
-        const $ = cheerio.load(response.data);
+        const response: axios.AxiosResponse<string> = await axios.get(`https://www.google.com/search?q=${encodeURIComponent(query)}&gl=us&hl=en`);
+        // @ts-ignore
+        const $: cheerio.Root = cheerio.load(response.data);
         const results: string[] = [];
-        $('.BNeawe').each((index, element) => {
+        // @ts-ignore
+        $('.BNeawe').each((index: number, element: cheerio.Element) => {
             results.push($(element).text());
         });
         return results.slice(0, 5).join('\n'); // Return top 5 results
@@ -216,9 +221,9 @@ async function scrapeWikipedia(url: string) {
                 input: normalize(sequencesToIndices([tokenizer.tokenize(title)])[0], maxLength),
                 output: normalize(sequencesToIndices([tokenizer.tokenize(firstParagraph)])[0], maxLength)
             };
-            await trainer.train([TrainingDataOnWiki], {
+            trainer.train([TrainingDataOnWiki], {
                 iterations: 1000, // Corrected spelling from 'interations' to 'iterations'
-                log: true
+                log: 1
             });
             scrapedwiki.push(url);
             const compressedData = Buffer.from(JSON.stringify(net)).toString('base64');
@@ -247,14 +252,32 @@ async function scrapeWikipedia(url: string) {
 
 scrapeWikipedia('https://en.wikipedia.org/wiki/Web_scraping')
 
-async function searchQuery(query) {
-    let results = await scrapeGoogle(query);
-    if (results == ('Sorry, I could not fetch the data.')) {
-        results = "N/A"
+interface SearchResult {
+    results: string;
+}
+
+async function searchQuery(query: string): Promise<string> {
+    let results: string = await scrapeGoogle(query);
+    if (results === 'Sorry, I could not fetch the data.') {
+        results = "N/A";
     }
     return results;
 }
-async function getGroqChatCompletion(content) {
+
+interface GroqMessage {
+    role: string;
+    content: string;
+}
+
+interface GroqChatCompletionResponse {
+    choices: {
+        message: {
+            content: string | null;
+        };
+    }[];
+}
+
+async function getGroqChatCompletion(content: string): Promise<GroqChatCompletionResponse> {
     return groq.chat.completions.create({
         messages: [
             {
@@ -265,7 +288,6 @@ async function getGroqChatCompletion(content) {
         model: "llama3-8b-8192",
     });
 }
-
 
 async function startChat() {
     while (true) {
@@ -293,9 +315,9 @@ async function startChat() {
             input: normalize(sequencesToIndices([tokenizer.tokenize(message)])[0], maxLength),
             output: normalize(sequencesToIndices([tokenizer.tokenize(combinedResponse)])[0], maxLength)
         };
-        await trainer.train([newTrainingData], {
+        trainer.train([newTrainingData], {
             iterations: 80000,
-            log: false
+            log: 1
         });
 
         // Also train on search responses content
@@ -303,9 +325,9 @@ async function startChat() {
             input: normalize(sequencesToIndices([tokenizer.tokenize(message)])[0], maxLength),
             output: normalize(sequencesToIndices([tokenizer.tokenize(searchResponse)])[0], maxLength)
         };
-        await trainer.train([searchTrainingData], {
+        trainer.train([searchTrainingData], {
             iterations: 80000,
-            log: false
+            log: 1
         });
 
         try {
@@ -340,9 +362,10 @@ client.on('messageCreate', async message => {
             input: normalize(sequencesToIndices([tokenizer.tokenize(userMessage)])[0], maxLength),
             output: normalize(sequencesToIndices([tokenizer.tokenize(searchResponse)])[0], maxLength)
         };
-        await trainer.train([searchTrainingData], {
+
+        trainer.train([searchTrainingData], {
             iterations: 90000,
-            log: true
+            log: 1
         });
 
         let cloudai2 = await getGroqChatCompletion(userMessage);
@@ -352,9 +375,9 @@ client.on('messageCreate', async message => {
             input: normalize(sequencesToIndices([tokenizer.tokenize(userMessage)])[0], maxLength),
             output: normalize(sequencesToIndices([tokenizer.tokenize(cloudai)])[0], maxLength)
         };
-        await trainer.train([newCloudTrainingData], {
+        trainer.train([newCloudTrainingData], {
             iterations: 90000,
-            log: true
+            log: 1
         })
 
         const sequence = normalize(sequencesToIndices([tokenizer.tokenize(userMessage)])[0], maxLength);
@@ -420,27 +443,45 @@ client.login(token);
 
 app.use(bodyParser.json());
 
-const rateLimit = (req, res, next) => {
+interface RateLimitRequest extends express.Request {}
+interface RateLimitResponse extends express.Response {}
+interface RateLimitNextFunction extends express.NextFunction {}
+
+declare global {
+    namespace NodeJS {
+        interface Global {
+            rateLimitStore?: number[];
+        }
+    }
+}
+
+const rateLimit = (req: RateLimitRequest, res: RateLimitResponse, next: RateLimitNextFunction): void => {
     const now = Date.now();
     const windowTime = 60 * 1000;
     const maxRequests = 30;
 
-    if (!global.rateLimitStore) {
-        global.rateLimitStore = [];
+    interface GlobalWithRateLimitStore extends NodeJS.Global {
+        rateLimitStore?: number[];
+    }
+    const globalWithRateLimitStore = global as GlobalWithRateLimitStore;
+    if (!globalWithRateLimitStore.rateLimitStore) {
+        globalWithRateLimitStore.rateLimitStore = [] as number[];
     }
 
-    global.rateLimitStore = global.rateLimitStore.filter(timestamp => now - timestamp < windowTime);
+    globalWithRateLimitStore.rateLimitStore = globalWithRateLimitStore.rateLimitStore.filter(timestamp => now - timestamp < windowTime);
 
-    if (global.rateLimitStore.length >= maxRequests) {
-        return res.status(429).json({ error: 'Global ratelimit 30 prompts / minute was reached!' });
+    if (globalWithRateLimitStore.rateLimitStore.length >= maxRequests) {
+        res.status(429).json({ error: 'Global ratelimit 30 prompts / minute was reached!' });
+        return;
     }
 
-    global.rateLimitStore.push(now);
+    globalWithRateLimitStore.rateLimitStore.push(now);
     next();
 };
 
 app.use(rateLimit);
 
+// @ts-ignore
 app.post('/api/ai', async (req, res) => {
     const prompt = req.body.prompt;
     if (!prompt) {
@@ -454,9 +495,9 @@ app.post('/api/ai', async (req, res) => {
         input: normalize(sequencesToIndices([tokenizer.tokenize(prompt)])[0], maxLength),
         output: normalize(sequencesToIndices([tokenizer.tokenize(searchResponse)])[0], maxLength)
     };
-    await trainer.train([searchTrainingData], {
+    trainer.train([searchTrainingData], {
         iterations: 90000,
-        log: true
+        log: 1
     });
 
     let cloudai2 = await getGroqChatCompletion(prompt);
@@ -466,9 +507,9 @@ app.post('/api/ai', async (req, res) => {
         input: normalize(sequencesToIndices([tokenizer.tokenize(prompt)])[0], maxLength),
         output: normalize(sequencesToIndices([tokenizer.tokenize(cloudai)])[0], maxLength)
     };
-    await trainer.train([newCloudTrainingData], {
+    trainer.train([newCloudTrainingData], {
         iterations: 90000,
-        log: true
+        log: 1
     })
 
     const sequence = normalize(sequencesToIndices([tokenizer.tokenize(prompt)])[0], maxLength);

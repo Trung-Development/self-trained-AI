@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    /* Language and Environment */
+    "target": "ESNext" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
+
+    /* Modules */
+    "module": "ESNext" /* Specify what module code is generated. */,
+    "lib": ["ESNext", "ES2023", "ES2022"],
+    "moduleResolution": "Node",
+    "allowImportingTsExtensions": true,
+    "allowJs": true,
+    "rootDir": "/",
+    "baseUrl": "/",
+    "importHelpers": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "types": ["node", "discord.js"],
+    "allowSyntheticDefaultImports": true,
+
+    /* Type Checking */
+    "strict": true /* Enable all strict type-checking options. */,
+    "noImplicitAny": true,
+    "skipLibCheck": true /* Skip type checking all .d.ts files. */,
+
+    /* Prevent Output */
+    "noEmit": true /* Do not emit outputs. */
+  },
+  "exclude": ["eslint.config.mjs", "node_modules", "dist"]
+}

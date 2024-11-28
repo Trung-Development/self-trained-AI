@@ -4,4 +4,3 @@ node_modules
 .flaskenv*
 !.env.project
 !.env.vault
-test2.txt
